@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 25% 97%;
+    --foreground: 20 10% 8%;
+
+    --card: 38 30% 95%;
+    --card-foreground: 20 10% 8%;
+
+    --popover: 40 25% 97%;
+    --popover-foreground: 20 10% 8%;
+
+    --primary: 36 50% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 345 55% 15%;
+    --secondary-foreground: 38 30% 95%;
+
+    --muted: 35 15% 90%;
+    --muted-foreground: 20 8% 45%;
+
+    --accent: 36 60% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 35 20% 86%;
+    --input: 35 20% 86%;
+    --ring: 36 50% 50%;
+
+    --radius: 0.75rem;
+
+    /* Brand tokens */
+    --gold: 36 60% 52%;
+    --gold-light: 38 55% 68%;
+    --gold-dark: 34 65% 38%;
+    --burgundy: 345 55% 15%;
+    --burgundy-light: 345 40% 25%;
+    --burgundy-dark: 345 65% 10%;
+    --cream: 38 40% 94%;
+    --cream-dark: 35 30% 84%;
+    --dark: 20 10% 6%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 20 12% 5%;
+    --foreground: 38 25% 92%;
+
+    --card: 345 40% 9%;
+    --card-foreground: 38 25% 92%;
+
+    --popover: 20 15% 7%;
+    --popover-foreground: 38 25% 92%;
+
+    --primary: 36 60% 52%;
+    --primary-foreground: 20 10% 5%;
+
+    --secondary: 345 40% 18%;
+    --secondary-foreground: 38 25% 92%;
+
+    --muted: 20 10% 14%;
+    --muted-foreground: 35 12% 55%;
+
+    --accent: 36 60% 45%;
+    --accent-foreground: 20 10% 5%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 20 8% 16%;
+    --input: 20 8% 16%;
+    --ring: 36 60% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-cairo antialiased;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(36 60% 52%), hsl(42 65% 68%), hsl(36 60% 52%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-gold {
+    background: linear-gradient(135deg, hsl(36 60% 45%), hsl(42 65% 60%), hsl(36 60% 48%));
+  }
+
+  .bg-gradient-burgundy {
+    background: linear-gradient(135deg, hsl(345 65% 10%), hsl(345 55% 15%), hsl(345 45% 20%));
+  }
+
+  .bg-gradient-dark {
+    background: linear-gradient(180deg, hsl(20 12% 3%), hsl(345 40% 7%), hsl(20 12% 5%));
+  }
+
+  .shadow-gold {
+    box-shadow: 0 8px 32px -8px hsl(36 60% 52% / 0.35);
+  }
+
+  .shadow-gold-lg {
+    box-shadow: 0 16px 48px -12px hsl(36 60% 52% / 0.4);
+  }
+
+  .border-gold {
+    border-color: hsl(36 60% 52% / 0.3);
+  }
+
+  .glass {
+    background: hsl(var(--background) / 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .glass-dark {
+    background: hsl(20 12% 5% / 0.7);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer components {
+  .auth-input {
+    @apply h-11 w-full rounded-xl border border-gold/30 bg-black/30 text-black caret-white placeholder:text-white/50 shadow-inner transition-colors;
+  }
+
+  .auth-input:focus-visible {
+    @apply border-gold/70 ring-2 ring-gold/30 outline-none;
+  }
+
+  .auth-input:-webkit-autofill,
+  .auth-input:-webkit-autofill:hover,
+  .auth-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff;
+    -webkit-box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.30) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+}

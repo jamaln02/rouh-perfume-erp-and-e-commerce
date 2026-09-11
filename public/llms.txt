@@ -1,0 +1,11 @@
+# Rouh | روح
+
+> Syrian luxury perfume store offering authentic oriental and western fragrances with cash-on-delivery shipping across Syria.
+
+## Pages
+
+- [Home](/): Featured perfumes, brand story, and personality quiz CTA.
+- [Shop](/shop): Full catalog of luxury perfumes filterable by category and fragrance family.
+- [Perfume Quiz](/quiz): 5-question personality quiz that recommends a perfume and rewards a 10% discount code.
+- [About](/about): The Rouh brand story, vision, and mission rooted in Damascus heritage.
+- [Contact](/contact): Phone, email, and address for customer support.
