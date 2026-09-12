@@ -37,7 +37,6 @@ class PrepareGoLiveReset extends Command
         'inventory_movements',
         'finished_goods_sale_movements',
         'opening_balance_financial_accounts',
-        'opening_balance_inventory',
         'opening_balance_payables_receivables',
         'opening_balance_fixed_assets',
         'financial_transactions',
@@ -85,14 +84,6 @@ class PrepareGoLiveReset extends Command
                     DB::table('financial_accounts')->update([
                         'opening_balance' => 0,
                         'current_balance' => 0,
-                        'updated_at' => now(),
-                    ]);
-                }
-
-                if (Schema::hasTable('materials')) {
-                    DB::table('materials')->update([
-                        'current_stock' => 0,
-                        'avg_unit_cost' => 0,
                         'updated_at' => now(),
                     ]);
                 }

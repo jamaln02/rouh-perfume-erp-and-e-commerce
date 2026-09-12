@@ -12,36 +12,41 @@ use Illuminate\Support\Str;
 class StandardProductSizesSeeder extends Seeder
 {
     /**
-     * Default catalog choices. They are deliberately editable after seeding.
+     * Default catalog choices.
+     * These values remain editable after seeding.
      */
     public const SIZES = [
-        '3ml tester',
-        '3ml crystal',
-        '5ml tester',
-        '5ml pen',
-        '10ml tester',
-        '15ml laser',
-        '30ml zara',
-        '50ml',
-        '60ml crystal',
         '100ml',
+        '50ml',
+        '5ml tester',
+        '10ml tester',
+        '3ml crystal',
+        '30ml gold laser',
+        '50ml gold laser',
+        '15ml laser',
+        '12ml oil vial',
+        '6ml oil vial',
+        '5ml red pen',
         '100ml yum yum blue',
-        '100ml yum yum icecream',
+        '100ml yum yum flower',
+        '30ml zara',
     ];
 
     public const PRICES = [
-        '3ml tester' => 100,
-        '3ml crystal' => 500,
-        '5ml tester' => 150,
-        '5ml pen' => 200,
-        '10ml tester' => 350,
-        '15ml laser' => 500,
-        '30ml zara' => 850,
-        '50ml' => 1250,
-        '60ml crystal' => 1750,
         '100ml' => 2000,
+        '50ml' => 1250,
+        '5ml tester' => 150,
+        '10ml tester' => 350,
+        '3ml crystal' => 500,
+        '30ml gold laser' => 850,
+        '50ml gold laser' => 1250,
+        '15ml laser' => 500,
+        '12ml oil vial' => 550,
+        '6ml oil vial' => 300,
+        '5ml red pen' => 200,
         '100ml yum yum blue' => 4500,
-        '100ml yum yum icecream' => 4500,
+        '100ml yum yum flower' => 4500,
+        '30ml zara' => 850,
     ];
 
     public function run(): void
@@ -50,26 +55,38 @@ class StandardProductSizesSeeder extends Seeder
             $this->applyToProduct($product);
         }
 
-        $this->command?->info('  ✓ Standard product sizes/prices applied. All values remain editable.');
+        $this->command?->info(
+            '✓ Standard product sizes/prices applied. All values remain editable.'
+        );
     }
 
     private function applyToProduct(Product $product): void
     {
         DB::transaction(function () use ($product): void {
-            // Compatibility with the previous label used before the catalog was made flexible.
+
+            /*
+             * Remove old standard variants that are no longer part
+             * of the current catalog.
+             *
+             * We intentionally do NOT convert 60ml crystal into
+             * another size. The old 60ml sizes are obsolete.
+             */
             ProductVariant::query()
                 ->where('product_id', $product->id)
-                ->where('size_label', '60ml gold crystal')
-                ->whereNotExists(function ($q) use ($product) {
-                    $q->select(DB::raw(1))
-                        ->from('product_variants as v2')
-                        ->whereColumn('v2.product_id', 'product_variants.product_id')
-                        ->where('v2.size_label', '60ml crystal');
-                })
-                ->update(['size_label' => '60ml crystal', 'updated_at' => now()]);
+                ->whereIn('size_label', [
+                    '60ml crystal',
+                    '60ml gold crystal',
+                    '60ml',
+                    '60ml gold',
+                ])
+                ->update([
+                    'is_active' => false,
+                    'updated_at' => now(),
+                ]);
 
             foreach (self::SIZES as $size) {
                 $price = self::PRICES[$size];
+
                 $variant = ProductVariant::query()
                     ->where('product_id', $product->id)
                     ->where('size_label', $size)
@@ -96,51 +113,92 @@ class StandardProductSizesSeeder extends Seeder
                     ]);
                 }
 
-                app(StandardRecipeService::class)->ensureForVariant($variant);
+                app(StandardRecipeService::class)
+                    ->ensureForVariant($variant);
             }
 
-            // Preserve any additional custom sizes the manager has created.
+            /*
+             * Preserve additional custom sizes created by the manager.
+             */
             $activeVariants = $product->variants()
                 ->where('is_active', true)
                 ->orderBy('created_at')
                 ->orderBy('id')
-                ->get(['size_label', 'selling_price_default']);
+                ->get([
+                    'size_label',
+                    'selling_price_default',
+                ]);
 
             $sizes = [];
             $prices = [];
+
             foreach ($activeVariants as $variant) {
                 $label = trim((string) $variant->size_label);
-                if ($label === '') continue;
+
+                if ($label === '') {
+                    continue;
+                }
+
                 $sizes[] = $label;
-                $prices[$label] = (float) ($variant->selling_price_default ?? 0);
+                $prices[$label] = (float) (
+                    $variant->selling_price_default ?? 0
+                );
             }
 
             $product->sizes = $sizes;
             $product->size_prices = $prices;
-            $reference = $activeVariants->firstWhere('size_label', '50ml') ?? $activeVariants->first();
+
+            $reference = $activeVariants->firstWhere(
+                'size_label',
+                '50ml'
+            ) ?? $activeVariants->first();
+
             if ($reference) {
-                $product->price = (float) ($reference->selling_price_default ?? $product->price ?? 0);
+                $product->price = (float) (
+                    $reference->selling_price_default
+                    ?? $product->price
+                    ?? 0
+                );
             }
+
             $product->save();
         });
     }
 
+    /**
+     * Extract the numeric volume from the size label.
+     *
+     * Examples:
+     * 100ml             => 100
+     * 50ml              => 50
+     * 10ml tester       => 10
+     * 12ml oil vial     => 12
+     * 6ml oil vial      => 6
+     */
     private function volume(string $size): ?float
     {
-        return preg_match('/(\d+(?:\.\d+)?)\s*ml/i', $size, $m) ? (float) $m[1] : null;
+        if (preg_match('/(\d+(?:\.\d+)?)\s*ml/i', $size, $matches)) {
+            return (float) $matches[1];
+        }
+
+        return null;
     }
 
     private function shapeForSize(string $size): ?string
     {
-        $key = mb_strtolower($size);
+        $key = mb_strtolower(trim($size));
+
         return match (true) {
-            str_contains($key, 'tester') => 'tester',
+            str_contains($key, '10ml tester') => 'tester',
+            str_contains($key, '5ml tester') => 'tester',
             str_contains($key, 'crystal') => 'crystal',
-            str_contains($key, 'pen') => 'pen',
+            str_contains($key, 'red pen') => 'pen',
+            str_contains($key, 'gold laser') => 'gold_laser',
             str_contains($key, 'laser') => 'laser',
             str_contains($key, 'zara') => 'zara',
             str_contains($key, 'yum yum blue') => 'yum_yum_blue',
-            str_contains($key, 'yum yum icecream') => 'yum_yum_ice_cream',
+            str_contains($key, 'yum yum flower') => 'yum_yum_flower',
+            str_contains($key, 'oil vial') => 'oil_vial',
             default => null,
         };
     }

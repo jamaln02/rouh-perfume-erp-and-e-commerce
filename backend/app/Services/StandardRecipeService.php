@@ -121,7 +121,7 @@ class StandardRecipeService
         $mapped = ProductMaterialMapping::query()
             ->where('product_id', $product->id)
             ->where('is_default', true)
-            ->whereHas('material', fn ($q) => $q
+            ->whereHas('material', fn($q) => $q
                 ->where('material_category', 'perfume_oil')
                 ->where('is_active', true))
             ->with('material')
@@ -165,56 +165,132 @@ class StandardRecipeService
             ->first();
     }
 
-    private function findBottleForVariant(ProductVariant $variant): ?Material
-    {
-        $label = mb_strtolower(trim((string) $variant->size_label));
-        $volume = (float) ($variant->volume_ml ?? 0);
+private function findBottleForVariant(ProductVariant $variant): ?Material
+{
+    $label = mb_strtolower(trim((string) $variant->size_label));
+    $volume = (float) ($variant->volume_ml ?? 0);
 
-        $query = Material::query()
-            ->where('material_category', 'packaging')
-            ->where('is_active', true);
+    $query = Material::query()
+        ->where('material_category', 'packaging')
+        ->where('is_active', true);
 
-        $candidates = collect();
-
-        if (str_contains($label, 'crystal') || str_contains($label, 'كريستال')) {
-            $candidates = (clone $query)->where('name_ar', 'like', '%كريستال%')->get();
-            if ($volume > 0) {
-                $candidates = $candidates->filter(fn (Material $m) => $this->materialNameHasVolume($m->name_ar, $volume));
-            }
-        } elseif (str_contains($label, 'pen') || str_contains($label, 'قلم')) {
-            $candidates = (clone $query)->where('name_ar', 'like', '%قلم%')->where('name_ar', 'like', '%' . (int) $volume . '%')->get();
-        } elseif (str_contains($label, 'tester') || str_contains($label, 'تيستر')) {
-            $candidates = (clone $query)
-                ->where(function ($q) use ($volume) {
-                    $q->where('subcategory', 'tester')
-                        ->orWhere('name_ar', 'like', '%تيستر%');
-                })
-                ->get();
-            if ($volume > 0) {
-                $matched = $candidates->first(fn (Material $m) => $this->materialNameHasVolume($m->name_ar, $volume));
-                if ($matched) return $matched;
-            }
-        } elseif (str_contains($label, 'laser') || str_contains($label, 'ليزر')) {
-            $candidates = (clone $query)->where('name_ar', 'like', '%ليزر%')->get();
-        } elseif (str_contains($label, 'zara') || str_contains($label, 'زارا')) {
-            $candidates = (clone $query)->where('name_ar', 'like', '%زارا%')->get();
-        } elseif (str_contains($label, 'yum yum blue') || str_contains($label, 'يم يم ازرق')) {
-            $candidates = (clone $query)->where('name_ar', 'like', '%يم يم ازرق%')->get();
-        } elseif (str_contains($label, 'yum yum icecream') || str_contains($label, 'يم يم ايسكريم')) {
-            $candidates = (clone $query)->where('name_ar', 'like', '%يم يم زهر%')->get();
-        } elseif ($volume == 50.0) {
-            $candidates = (clone $query)->where('name_ar', 'like', '%شفافة 50 مل%')->get();
-        } elseif ($volume == 100.0) {
-            $candidates = (clone $query)->where('name_ar', 'like', '%شفافة 100 مل%')->get();
-        }
-
-        return $candidates->first() ?: null;
+    /*
+     * Oil vials
+     */
+    if (str_contains($label, '12ml oil vial')) {
+        return $query
+            ->where('id', 102)
+            ->first();
     }
+
+    if (str_contains($label, '6ml oil vial')) {
+        return $query
+            ->where('id', 103)
+            ->first();
+    }
+
+    /*
+     * Yum Yum
+     */
+    if (str_contains($label, '100ml yum yum blue')) {
+        return $query
+            ->where('id', 111)
+            ->first();
+    }
+
+    if (str_contains($label, '100ml yum yum flower')) {
+        return $query
+            ->where('id', 110)
+            ->first();
+    }
+
+    /*
+     * Gold Laser
+     */
+    if (str_contains($label, '30ml gold laser')) {
+        return $query
+            ->where('id', 118)
+            ->first();
+    }
+
+    if (str_contains($label, '50ml gold laser')) {
+        return $query
+            ->where('id', 117)
+            ->first();
+    }
+
+    /*
+     * 15ml Laser
+     */
+    if (str_contains($label, '15ml laser')) {
+        return $query
+            ->where('id', 116)
+            ->first();
+    }
+
+    /*
+     * Zara
+     */
+    if (str_contains($label, '30ml zara')) {
+        return $query
+            ->where('id', 113)
+            ->first();
+    }
+
+    /*
+     * Red Pen
+     */
+    if (str_contains($label, '5ml red pen')) {
+        return $query
+            ->where('id', 114)
+            ->first();
+    }
+
+    /*
+     * Testers
+     */
+    if (str_contains($label, '10ml tester')) {
+        return $query
+            ->where('id', 109)
+            ->first();
+    }
+
+    if (str_contains($label, '5ml tester')) {
+        return $query
+            ->where('id', 115)
+            ->first();
+    }
+
+    /*
+     * 3ml Crystal
+     */
+    if (str_contains($label, '3ml crystal')) {
+        return $query
+            ->where('id', 112)
+            ->first();
+    }
+
+    /*
+     * Standard bottles
+     */
+    if ($label === '50ml') {
+        return $query
+            ->where('id', 120)
+            ->first();
+    }
+
+    if ($label === '100ml') {
+        return $query
+            ->where('id', 119)
+            ->first();
+    }
+
+    return null;
+}
     private function materialNameHasVolume(?string $name, float $volume): bool
     {
         if (!$name || $volume <= 0) return false;
         $pattern = '/(?<!\d)' . preg_quote((string) (int) $volume, '/') . '\s*مل(?!\d)/u';
         return (bool) preg_match($pattern, $name);
     }
-
 }

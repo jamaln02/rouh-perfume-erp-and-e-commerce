@@ -32,16 +32,20 @@ class StorefrontConfigController extends Controller
         ];
 
         $rates = $this->shipping->getCityRates();
-        $cities = array_map(function (array $city) use ($rates): array {
-            return [...$city, 'shipping' => (float) ($rates[$city['key']] ?? 0)];
-        }, $cityLabels);
 
+        $cities = array_map(function (array $city) use ($rates): array {
+            return [
+                ...$city,
+                'shipping' => (float) ($rates[$city['key']] ?? 0),
+            ];
+        }, $cityLabels);
 
         return response()->json([
             'shipping' => [
                 'free_threshold' => $this->shipping->getFreeShippingThreshold(),
                 'cities' => $cities,
             ],
+
             'loyalty' => [
                 'enabled' => $this->settings->getBool('loyalty_enabled', true),
                 'earn_amount' => $this->settings->getFloat('loyalty_earn_amount', 1000),
@@ -49,17 +53,32 @@ class StorefrontConfigController extends Controller
                 'redeem_points' => $this->settings->getInt('loyalty_redeem_points', 100),
                 'redeem_discount' => $this->settings->getFloat('loyalty_redeem_discount', 500),
             ],
+
             'quiz' => [
                 'discount_percent' => $this->settings->getInt('quiz_discount_percent', 10),
             ],
+
             'social' => [
                 'instagram' => 'rouh_.parfum',
             ],
+
             'offers' => [
-                'title_ar' => (string) $this->settings->get('offers_title_ar', 'العروض والمجموعات'),
-                'title_en' => (string) $this->settings->get('offers_title_en', 'Bundles & Offers'),
-                'subtitle_ar' => (string) $this->settings->get('offers_subtitle_ar', 'وفر أكثر مع مجموعاتنا الحصرية'),
-                'subtitle_en' => (string) $this->settings->get('offers_subtitle_en', 'Save more with our exclusive bundles'),
+                'title_ar' => (string) $this->settings->get(
+                    'offers_title_ar',
+                    'العروض والمجموعات'
+                ),
+                'title_en' => (string) $this->settings->get(
+                    'offers_title_en',
+                    'Bundles & Offers'
+                ),
+                'subtitle_ar' => (string) $this->settings->get(
+                    'offers_subtitle_ar',
+                    'وفر أكثر مع مجموعاتنا الحصرية'
+                ),
+                'subtitle_en' => (string) $this->settings->get(
+                    'offers_subtitle_en',
+                    'Save more with our exclusive bundles'
+                ),
             ],
         ]);
     }
